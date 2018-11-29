@@ -18,7 +18,7 @@ import csv
 from typing import Any, Dict, List, Optional, Tuple
 
 from melody import Melody
-from prefix_tree import SimplePrefixTree, CompressedPrefixTree
+from prefix_tree import Autocompleter, SimplePrefixTree, CompressedPrefixTree
 import re
 
 
@@ -277,6 +277,7 @@ def parse_melody(line: List) -> Tuple[List, Melody]:
         notes.append((int(line[i-2]), int(line[i-1])))
     return intervals, Melody(line[0], notes)
 
+
 ###############################################################################
 # Sample runs
 ###############################################################################
@@ -313,6 +314,18 @@ def sample_melody_autocomplete() -> None:
         melody.play()
 
 
+def test() -> None:
+    """A sample run of the melody autocomplete engine."""
+    engine = MelodyAutocompleteEngine({
+        'file': 'data/songbook.csv',
+        'autocompleter': 'simple',
+        'weight_type': 'sum'
+    })
+    melodies = engine.autocomplete([0])
+    for melody, _ in melodies:
+        melody.play()
+
+
 if __name__ == '__main__':
     # import python_ta
     # python_ta.check_all(config={
@@ -325,13 +338,7 @@ if __name__ == '__main__':
     import sys
     sys.setrecursionlimit(5000)
 
-    my_melody = MelodyAutocompleteEngine({
-        'file': 'data/songbook.csv',
-        'autocompleter': 'simple',
-        'weight_type': 'sum'
-    })
-    print(my_melody.autocompleter.autocomplete([5], 10))
-
     # print(sample_letter_autocomplete())
     # print(sample_sentence_autocomplete())
-    sample_melody_autocomplete()
+    # sample_melody_autocomplete()
+    test()

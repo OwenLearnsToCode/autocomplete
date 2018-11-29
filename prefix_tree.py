@@ -159,28 +159,6 @@ class SimplePrefixTree(Autocompleter):
             The given value is either:
                 1) not in this Autocompleter
                 2) was previously inserted with the SAME prefix sequence
-
-        >>> tree = new_subtree([], 3.0, 'sum')
-        >>> leaf1 = new_subtree('c', 3.0, 'sum')
-        >>> leaf2 = new_subtree('ca', 3.0, 'sum')
-        >>> leaf3 = new_subtree('ba', 3.0, 'sum')
-        >>> subtree1 = new_subtree(['c'], 3.0, 'sum')
-        >>> subtree2 = new_subtree(['c', 'a'], 3.0, 'sum')
-        >>> subtree3 = new_subtree(['b'], 3.0, 'sum')
-        >>> subtree4 = new_subtree(['b', 'a'], 3.0, 'sum')
-        >>> subtree2.subtrees.append(leaf2)
-        >>> subtree1.subtrees.append(leaf1)
-        >>> subtree1.subtrees.append(subtree2)
-        >>> subtree4.subtrees.append(leaf3)
-        >>> subtree3.subtrees.append(subtree4)
-        >>> tree.subtrees.append(subtree1)
-        >>> tree.subtrees.append(subtree3)
-        >>> tree.insert('car', 3.0, ['c','a','r'])
-        >>> tree.subtrees[0].subtrees[1].subtrees[0].subtrees[0].value
-        'car'
-        >>> tree.insert('dog', 3.0, ['d', 'o', 'g'])
-        >>> tree.subtrees[0].subtrees[0].subtrees[0].subtrees[0].value
-        'dog'
         """
         self._insert_helper(value, weight, prefix)
         self._update_order(prefix)
@@ -200,41 +178,19 @@ class SimplePrefixTree(Autocompleter):
             The given value is either:
                 1) not in this Autocompleter
                 2) was previously inserted with the SAME prefix sequence
-
-        >>> tree = new_subtree([], 3.0, 'sum')
-        >>> leaf1 = new_subtree('c', 3.0, 'sum')
-        >>> leaf2 = new_subtree('ca', 3.0, 'sum')
-        >>> leaf3 = new_subtree('ba', 3.0, 'sum')
-        >>> subtree1 = new_subtree(['c'], 3.0, 'sum')
-        >>> subtree2 = new_subtree(['c', 'a'], 3.0, 'sum')
-        >>> subtree3 = new_subtree(['b'], 3.0, 'sum')
-        >>> subtree4 = new_subtree(['b', 'a'], 3.0, 'sum')
-        >>> subtree2.subtrees.append(leaf2)
-        >>> subtree1.subtrees.append(leaf1)
-        >>> subtree1.subtrees.append(subtree2)
-        >>> subtree4.subtrees.append(leaf3)
-        >>> subtree3.subtrees.append(subtree4)
-        >>> tree.subtrees.append(subtree1)
-        >>> tree.subtrees.append(subtree3)
-        >>> tree.insert('car', 3.0, ['c','a','r'])
-        >>> tree.subtrees[0].subtrees[1].subtrees[0].subtrees[0].value
-        'car'
-        >>> tree.insert('dog', 3.0, ['d', 'o', 'g'])
-        >>> tree.subtrees[0].subtrees[0].subtrees[0].subtrees[0].value
-        'dog'
         """
         self.size += 1
         if self.is_empty():
             self._insert_empty(value, weight, prefix, 0)
         else:
             for subtree in self.subtrees:
-                if subtree.value == prefix[0:len(subtree.value)]:
-                    self._adjust_weight(weight)
-                    subtree._insert_helper(value, weight, prefix)
-                    return None
-                elif subtree.value == value:
+                if subtree.value == value:
                     self._adjust_weight(weight)
                     subtree.weight += weight
+                    return None
+                elif subtree.value == prefix[0:len(subtree.value)]:
+                    self._adjust_weight(weight)
+                    subtree._insert_helper(value, weight, prefix)
                     return None
             for i in range(len(self.subtrees)):
                 if self.subtrees[i].weight <= weight:
@@ -392,7 +348,7 @@ def new_subtree(value: Any, weight: float, weight_type: str) -> \
 ################################################################################
 # CompressedPrefixTree (Task 6)
 ################################################################################
-class CompressedPrefixTree(Autocompleter):
+class CompressedPrefixTree(SimplePrefixTree):
     """A compressed prefix tree implementation.
 
     While this class has the same public interface as SimplePrefixTree,
@@ -442,7 +398,13 @@ class CompressedPrefixTree(Autocompleter):
 
 
 if __name__ == '__main__':
-    import python_ta
-    python_ta.check_all(config={
-        'max-nested-blocks': 4
-    })
+    tree = SimplePrefixTree('sum')
+    tree.insert('cat', 1.0, ['c', 'a', 't'])
+    tree.insert('cat', 1.0, ['c', 'a', 't'])
+    tree.insert('car', 3.0, ['c', 'a', 'r'])
+    print(str(tree))
+
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-nested-blocks': 4
+    # })
