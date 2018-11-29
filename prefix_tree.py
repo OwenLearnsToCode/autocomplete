@@ -15,7 +15,7 @@ testing directly! You may, however, add new private attributes, methods, and
 top-level functions to this file.
 """
 from __future__ import annotations
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 
 ################################################################################
@@ -332,17 +332,8 @@ class SimplePrefixTree(Autocompleter):
                             i += 1
                 else:
                     for subtree in self.subtrees:
-                        subtree._change_all_weights(prefix, last, weight_sum, removed_size)
-
-
-def new_subtree(value: Any, weight: float, weight_type: str) -> \
-        SimplePrefixTree:
-    """helper function for returning a subtree with assigned values"""
-    subtree = SimplePrefixTree(weight_type)
-    subtree.value = value
-    subtree.weight = weight
-    subtree.size = 1
-    return subtree
+                        subtree._change_all_weights(prefix, last, weight_sum,
+                                                    removed_size)
 
 
 ################################################################################
@@ -395,13 +386,78 @@ class CompressedPrefixTree(SimplePrefixTree):
     value: Optional[Any]
     weight: float
     subtrees: List[CompressedPrefixTree]
+    _weight_sum: float
+    _weight_type: str
+    size: int
+
+    def __init__(self, weight_type: str) -> None:
+        SimplePrefixTree.__init__(self, weight_type)
+
+    def _insert_helper(self, value: Any, weight: float, prefix: List):
+        self.size += 1
+        if self.is_empty():
+            self._insert_empty(value, weight, prefix, 0)
+        else:
+            for subtree in self.subtrees:
+                if subtree.value == value:
+                    self._adjust_weight(weight)
+                    subtree.weight += weight
+                    return None
+                elif subtree.value == prefix[0:len(subtree.value)]:
+                    self._adjust_weight(weight)
+                    subtree._insert_helper(value, weight, prefix)
+                    return None
+                elif subtree.value[0] == prefix[0]:
+                    for i in range(1, min(len(subtree.value), len(prefix))):
+                        if subtree.value[i] != prefix[i]:
+                            self._adjust_weight(weight)
+                            self._compress_helper(subtree, value, weight,
+                                                  prefix, i)
+                            break
+                    return None
+            for i in range(len(self.subtrees)):
+                if self.subtrees[i].weight <= weight:
+                    self._insert_empty(value, weight, prefix, i)
+                    return None
+            self._insert_empty(value, weight, prefix, len(self.subtrees))
+
+    def _insert_empty(self, value: Any, weight: float, prefix: List,
+                      index: int) -> None:
+        """helper function for inserting into an empty tree"""
+        self._adjust_weight(weight)
+        self.subtrees.insert(index, new_subtree(prefix, weight,
+                                                self._weight_type))
+        self.subtrees[index].subtrees.append(new_subtree(value, weight,
+                                                         self._weight_type))
+
+    def _compress_helper(self, subtree: CompressedPrefixTree, value: Any,
+                         weight: float, prefix: List, index: int) -> None:
+        subtree_index = self.subtrees.index(subtree)
+        self.subtrees[subtree_index] = new_subtree(
+            prefix[:index], subtree.weight, subtree._weight_type)
+        self.subtrees[subtree_index].size = subtree.size
+        self.subtrees[subtree_index].subtrees.append(subtree)
+        self.subtrees[subtree_index]._adjust_weight(subtree.weight)
+        self.subtrees[subtree_index]._insert_empty(value, weight, prefix,
+                                                   weight < subtree.weight)
+
+
+def new_subtree(value: Any, weight: float, weight_type: str) -> \
+        Union[SimplePrefixTree, CompressedPrefixTree]:
+    """helper function for returning a subtree with assigned values"""
+    subtree = SimplePrefixTree(weight_type)
+    subtree.value = value
+    subtree.weight = weight
+    subtree.size = 1
+    return subtree
 
 
 if __name__ == '__main__':
-    tree = SimplePrefixTree('sum')
-    tree.insert('cat', 1.0, ['c', 'a', 't'])
+    tree = CompressedPrefixTree('sum')
     tree.insert('cat', 1.0, ['c', 'a', 't'])
     tree.insert('car', 3.0, ['c', 'a', 'r'])
+    tree.insert('cute', 2.0, ['c', 'u', 't', 'e'])
+    tree.insert('dog', 6.0, ['d', 'o', 'g'])
     print(str(tree))
 
     # import python_ta

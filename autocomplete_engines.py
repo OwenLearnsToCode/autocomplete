@@ -67,13 +67,13 @@ class LetterAutocompleteEngine:
         # lines of the file and process them according to the description in
         # this method's docstring.
         with open(config['file'], encoding='utf8') as f:
-                if config['autocompleter'] == 'simple':
-                    self.autocompleter = SimplePrefixTree(config['weight_type'])
-                elif config['autocompleter'] == 'compressed':
-                    self.autocompleter = SimplePrefixTree(config['weight_type'])
-                for line in f:
-                    line = re.sub('[^a-z0-9 ]', '', line.lower())
-                    self.autocompleter.insert(line, 1, [char for char in line])
+            if config['autocompleter'] == 'simple':
+                self.autocompleter = SimplePrefixTree(config['weight_type'])
+            elif config['autocompleter'] == 'compressed':
+                self.autocompleter = SimplePrefixTree(config['weight_type'])
+            for line in f:
+                line = re.sub('[^a-z0-9 ]', '', line.lower())
+                self.autocompleter.insert(line, 1, [char for char in line])
 
     def autocomplete(self, prefix: str,
                      limit: Optional[int] = None) -> List[Tuple[str, float]]:
@@ -154,14 +154,14 @@ class SentenceAutocompleteEngine:
         # We haven't given you any starter code here! You should review how
         # you processed CSV files on Assignment 1.
         with open(config['file'], encoding='utf8') as f:
-                if config['autocompleter'] == 'simple':
-                    self.autocompleter = SimplePrefixTree(config['weight_type'])
-                elif config['autocompleter'] == 'compressed':
-                    self.autocompleter = SimplePrefixTree(config['weight_type'])
-                for line in f:
-                    line = line.split(',')
-                    line[0] = re.sub('[^a-z0-9 ]', '', line[0].lower())
-                    self.autocompleter.insert(line[0], float(line[1]), line[0].split())
+            if config['autocompleter'] == 'simple':
+                self.autocompleter = SimplePrefixTree(config['weight_type'])
+            elif config['autocompleter'] == 'compressed':
+                self.autocompleter = SimplePrefixTree(config['weight_type'])
+            for line in f:
+                line = line.split(',')
+                line[0] = re.sub('[^a-z0-9 ]', '', line[0].lower())
+                self.autocompleter.insert(line[0], float(line[1]), line[0].split())
 
     def autocomplete(self, prefix: str,
                      limit: Optional[int] = None) -> List[Tuple[str, float]]:
