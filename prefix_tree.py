@@ -179,10 +179,11 @@ class SimplePrefixTree(Autocompleter):
                 1) not in this Autocompleter
                 2) was previously inserted with the SAME prefix sequence
         """
-        self.size += 1
         if self.is_empty():
+            self.size += 1
             self._insert_empty(value, weight, prefix, 0)
         else:
+            self.size += 1
             for subtree in self.subtrees:
                 if subtree.value == value:
                     self._adjust_weight(weight)
