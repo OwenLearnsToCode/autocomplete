@@ -19,7 +19,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from melody import Melody
 from prefix_tree import Autocompleter, SimplePrefixTree, CompressedPrefixTree
-import re
 
 
 ################################################################################
@@ -72,7 +71,7 @@ class LetterAutocompleteEngine:
             elif config['autocompleter'] == 'compressed':
                 self.autocompleter = SimplePrefixTree(config['weight_type'])
             for line in f:
-                line = re.sub('[^a-z0-9 ]', '', line.lower())
+                line = ''.join(char for char in line.lower() if (char.isalnum() or char == ' '))
                 self.autocompleter.insert(line, 1, [char for char in line])
 
     def autocomplete(self, prefix: str,
@@ -160,7 +159,7 @@ class SentenceAutocompleteEngine:
                 self.autocompleter = SimplePrefixTree(config['weight_type'])
             for line in f:
                 line = line.split(',')
-                line[0] = re.sub('[^a-z0-9 ]', '', line[0].lower())
+                line[0] = ''.join(char for char in line if (char.isalnum() or char == ''))
                 self.autocompleter.insert(line[0], float(line[1]), line[0].split())
 
     def autocomplete(self, prefix: str,
@@ -341,4 +340,4 @@ if __name__ == '__main__':
     # print(sample_letter_autocomplete())
     # print(sample_sentence_autocomplete())
     # sample_melody_autocomplete()
-    test()
+    # test()

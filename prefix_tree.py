@@ -203,9 +203,9 @@ class SimplePrefixTree(Autocompleter):
         """helper function for inserting into an empty tree"""
         self._adjust_weight(weight)
         if self.value == prefix:
-            self.subtrees.insert(index, new_subtree(value, weight, self._weight_type))
+            self.subtrees.insert(index, new_subtree_simple(value, weight, self._weight_type))
         else:
-            self.subtrees.insert(index, new_subtree(self.value +
+            self.subtrees.insert(index, new_subtree_simple(self.value +
                                                     [prefix[len(self.value)]],
                                                     weight, self._weight_type))
             self.subtrees[index]._insert_empty(value, weight, prefix, 0)
@@ -265,6 +265,11 @@ class SimplePrefixTree(Autocompleter):
         If limit is None, return *every* match for the given prefix.
         Precondition: limit is None or limit > 0.
         """
+        result = self._autocomplete_helper(prefix, limit)
+        return sorted(result, key=lambda weight: weight[1], reverse=True)
+
+    def _autocomplete_helper(self, prefix: List, limit: Optional[int] = None) -> List[Tuple[Any, float]]:
+        """SOMETHING"""
         if self.is_empty():
             return []
         else:
@@ -273,7 +278,7 @@ class SimplePrefixTree(Autocompleter):
                 lst += self._iterate_helper(limit)
             elif self.value == prefix[0: len(self.value)]:
                 for subtree in self.subtrees:
-                    lst += subtree.autocomplete(prefix, limit)
+                    lst += subtree._autocomplete_helper(prefix, limit)
             return lst
 
     def _iterate_helper(self, limit: Optional[int]) -> List[Tuple[Any, float]]:
@@ -336,6 +341,16 @@ class SimplePrefixTree(Autocompleter):
                                                     removed_size)
 
 
+def new_subtree_simple(value: Any, weight: float, weight_type: str) -> \
+        SimplePrefixTree:
+    """helper function for returning a subtree with assigned values"""
+    subtree = SimplePrefixTree(weight_type)
+    subtree.value = value
+    subtree.weight = weight
+    subtree.size = 1
+    return subtree
+
+
 ################################################################################
 # CompressedPrefixTree (Task 6)
 ################################################################################
@@ -394,16 +409,17 @@ class CompressedPrefixTree(SimplePrefixTree):
         SimplePrefixTree.__init__(self, weight_type)
 
     def _insert_helper(self, value: Any, weight: float, prefix: List):
-        self.size += 1
         if self.is_empty():
+            self.size += 1
             self._insert_empty(value, weight, prefix, 0)
         else:
+            self.size += 1
             for subtree in self.subtrees:
                 if subtree.value == value:
                     self._adjust_weight(weight)
                     subtree.weight += weight
                     return None
-                elif subtree.value == prefix[0:len(subtree.value)]:
+                elif subtree.value == prefix[:len(subtree.value)]:
                     self._adjust_weight(weight)
                     subtree._insert_helper(value, weight, prefix)
                     return None
@@ -425,15 +441,15 @@ class CompressedPrefixTree(SimplePrefixTree):
                       index: int) -> None:
         """helper function for inserting into an empty tree"""
         self._adjust_weight(weight)
-        self.subtrees.insert(index, new_subtree(prefix, weight,
-                                                self._weight_type))
-        self.subtrees[index].subtrees.append(new_subtree(value, weight,
-                                                         self._weight_type))
+        self.subtrees.insert(index, new_subtree_compressed(prefix, weight,
+                                                           self._weight_type))
+        self.subtrees[index].subtrees.append(new_subtree_compressed(
+            value, weight, self._weight_type))
 
     def _compress_helper(self, subtree: CompressedPrefixTree, value: Any,
                          weight: float, prefix: List, index: int) -> None:
         subtree_index = self.subtrees.index(subtree)
-        self.subtrees[subtree_index] = new_subtree(
+        self.subtrees[subtree_index] = new_subtree_compressed(
             prefix[:index], subtree.weight, subtree._weight_type)
         self.subtrees[subtree_index].size = subtree.size
         self.subtrees[subtree_index].subtrees.append(subtree)
@@ -441,11 +457,52 @@ class CompressedPrefixTree(SimplePrefixTree):
         self.subtrees[subtree_index]._insert_empty(value, weight, prefix,
                                                    weight < subtree.weight)
 
+    def _autocomplete_helper(self, prefix: List, limit: Optional[int] = None) -> List[Tuple[Any, float]]:
+        """ Something"""
+        if self.is_empty():
+            return []
+        else:
+            lst = []
+            if self.value == prefix or (len(self.value) > len(prefix) and
+                                        self.value[:len(prefix)] == prefix):
+                lst += self._iterate_helper(limit)
+            elif self.value == prefix[0: len(self.value)]:
+                for subtree in self.subtrees:
+                    lst += subtree._autocomplete_helper(prefix, limit)
+            return lst
 
-def new_subtree(value: Any, weight: float, weight_type: str) -> \
-        Union[SimplePrefixTree, CompressedPrefixTree]:
+    def _iterate_helper(self, limit: Optional[int]) -> List[Tuple[Any, float]]:
+        """SOMETHING"""
+        if self.is_leaf():
+            return [(self.value, self.weight)]
+        else:
+            lst = []
+            for subtree in self.subtrees:
+                if limit is None or len(lst) < limit:
+                    lst.extend(subtree._iterate_helper(limit))
+            return lst
+
+    def remove(self, prefix: List):
+        if self.is_empty():
+            return None
+        elif not prefix:
+            self.__init__(self._weight_type)
+        else:
+            for subtree in self.subtrees:
+                if subtree.value == prefix:
+                    self._adjust_weight(-subtree.weight)
+                    self.subtrees.remove(subtree)
+                    return None
+                elif subtree.value == prefix[:len(subtree.value)]:
+                    subtree.remove(prefix)
+                    return None
+            return None
+
+
+def new_subtree_compressed(value: Any, weight: float, weight_type: str) -> \
+        CompressedPrefixTree:
     """helper function for returning a subtree with assigned values"""
-    subtree = SimplePrefixTree(weight_type)
+    subtree = CompressedPrefixTree(weight_type)
     subtree.value = value
     subtree.weight = weight
     subtree.size = 1
@@ -453,12 +510,23 @@ def new_subtree(value: Any, weight: float, weight_type: str) -> \
 
 
 if __name__ == '__main__':
+    # tree = SimplePrefixTree('sum')
+    # tree.insert('car', 9, ['c', 'a', 'r'])
+    # tree.insert('care', 5, ['c', 'a', 'r', 'e'])
+    # tree.insert('cat', 10, ['c', 'a', 't'])
+    # tree.insert('cute', 3, ['c', 'u', 't', 'e'])
+    # tree.insert('danger', 11, ['d', 'a', 'n', 'g', 'e', 'r'])
+    # print(tree)
+
     tree = CompressedPrefixTree('sum')
-    tree.insert('cat', 1.0, ['c', 'a', 't'])
-    tree.insert('car', 3.0, ['c', 'a', 'r'])
-    tree.insert('cute', 2.0, ['c', 'u', 't', 'e'])
-    tree.insert('dog', 6.0, ['d', 'o', 'g'])
-    print(str(tree))
+    tree.insert('car', 9, ['c', 'a', 'r'])
+    tree.insert('care', 5, ['c', 'a', 'r', 'e'])
+    tree.insert('cat', 10, ['c', 'a', 't'])
+    tree.insert('danger', 11, ['d', 'a', 'n', 'g', 'e', 'r'])
+    tree.insert('door', 8, ['d', 'o', 'o', 'r'])
+    print(tree)
+    tree.remove(['c', 'a'])
+    print(tree)
 
     # import python_ta
     # python_ta.check_all(config={
