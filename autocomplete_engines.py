@@ -18,7 +18,7 @@ import csv
 from typing import Any, Dict, List, Optional, Tuple
 
 from melody import Melody
-from prefix_tree import Autocompleter, SimplePrefixTree, CompressedPrefixTree
+from prefix_tree import SimplePrefixTree, CompressedPrefixTree
 
 
 ################################################################################
@@ -62,16 +62,14 @@ class LetterAutocompleteEngine:
         one line of the input file; this would result in that string getting
         a larger weight (because of how Autocompleter.insert works).
         """
-        # We've opened the file for you here. You should iterate over the
-        # lines of the file and process them according to the description in
-        # this method's docstring.
         with open(config['file'], encoding='utf8') as f:
             if config['autocompleter'] == 'simple':
                 self.autocompleter = SimplePrefixTree(config['weight_type'])
             elif config['autocompleter'] == 'compressed':
                 self.autocompleter = SimplePrefixTree(config['weight_type'])
             for line in f:
-                line = ''.join(char for char in line.lower() if (char.isalnum() or char == ' '))
+                line = ''.join(char for char in line.lower() if
+                               (char.isalnum() or char == ' '))
                 self.autocompleter.insert(line, 1, [char for char in line])
 
     def autocomplete(self, prefix: str,
@@ -159,8 +157,10 @@ class SentenceAutocompleteEngine:
                 self.autocompleter = SimplePrefixTree(config['weight_type'])
             for line in f:
                 line = line.lower().split(',')
-                line[0] = ''.join(char for char in line[0] if (char.isalnum() or char == ' '))
-                self.autocompleter.insert(line[0], float(line[1]), line[0].split())
+                line[0] = ''.join(char for char in line[0] if (char.isalnum()
+                                                               or char == ' '))
+                self.autocompleter.insert(line[0], float(line[1]),
+                                          line[0].split())
 
     def autocomplete(self, prefix: str,
                      limit: Optional[int] = None) -> List[Tuple[str, float]]:
@@ -268,6 +268,9 @@ class MelodyAutocompleteEngine:
 
 
 def parse_melody(line: List) -> Tuple[List, Melody]:
+    """Parse list of notes and return a tuple pairing a list of intervals and a
+    Melody object
+    """
     line = list(filter(None, line))
     intervals = []
     notes = []
@@ -313,46 +316,18 @@ def sample_melody_autocomplete() -> None:
         melody.play()
 
 
-def test() -> None:
-    """A sample run of the melody autocomplete engine."""
-    engine = MelodyAutocompleteEngine({
-        'file': 'data/songbook.csv',
-        'autocompleter': 'simple',
-        'weight_type': 'sum'
-    })
-    melodies = engine.autocomplete([0])
-    for melody, _ in melodies:
-        melody.play()
-
-
 if __name__ == '__main__':
-    # import python_ta
-    # python_ta.check_all(config={
-    #     'allowed-io': ['__init__'],
-    #     'extra-imports': ['csv', 'prefix_tree', 'melody']
-    # })
+    import python_ta
+    python_ta.check_all(config={
+        'allowed-io': ['__init__'],
+        'extra-imports': ['csv', 'prefix_tree', 'melody']
+    })
 
     # This is used to increase the recursion limit so that your sample runs
     # work even for fairly tall simple prefix trees.
     import sys
     sys.setrecursionlimit(5000)
 
-    engine = SentenceAutocompleteEngine({
-        'file': 'data/sample_sentences.csv',
-        'autocompleter': 'simple',
-        'weight_type': 'average'
-    })
-
-    print(engine.autocompleter)
-
-    # Check that one sentence can be inserted twice
-    results = engine.autocomplete('a')
-    print(results)
-    # assert len(results) == 1
-    # assert results[0][0] == 'a star is born'
-    # assert results[0][1] == 15.0 + 6.5
-
     # print(sample_letter_autocomplete())
     # print(sample_sentence_autocomplete())
     # sample_melody_autocomplete()
-    # test()
