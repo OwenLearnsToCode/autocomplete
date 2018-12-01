@@ -15,7 +15,7 @@ testing directly! You may, however, add new private attributes, methods, and
 top-level functions to this file.
 """
 from __future__ import annotations
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
 
 ################################################################################
@@ -519,14 +519,9 @@ if __name__ == '__main__':
     # tree.insert('danger', 11, ['d', 'a', 'n', 'g', 'e', 'r'])
     # print(tree)
 
-    tree = CompressedPrefixTree('sum')
-    tree.insert('car', 9, ['c', 'a', 'r'])
-    tree.insert('care', 5, ['c', 'a', 'r', 'e'])
-    tree.insert('cat', 10, ['c', 'a', 't'])
-    tree.insert('danger', 11, ['d', 'a', 'n', 'g', 'e', 'r'])
-    tree.insert('door', 8, ['d', 'o', 'o', 'r'])
-    print(tree)
-    tree.remove(['c', 'a'])
+    tree = SimplePrefixTree('sum')
+    tree.insert('cat', 2.0, ['c', 'a', 't'])
+    tree.insert('cat', 2.0, ['c', 'a', 't'])
     print(tree)
 
     # import python_ta

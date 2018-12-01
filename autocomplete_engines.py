@@ -158,8 +158,8 @@ class SentenceAutocompleteEngine:
             elif config['autocompleter'] == 'compressed':
                 self.autocompleter = SimplePrefixTree(config['weight_type'])
             for line in f:
-                line = line.split(',')
-                line[0] = ''.join(char for char in line if (char.isalnum() or char == ''))
+                line = line.lower().split(',')
+                line[0] = ''.join(char for char in line[0] if (char.isalnum() or char == ' '))
                 self.autocompleter.insert(line[0], float(line[1]), line[0].split())
 
     def autocomplete(self, prefix: str,
@@ -336,6 +336,21 @@ if __name__ == '__main__':
     # work even for fairly tall simple prefix trees.
     import sys
     sys.setrecursionlimit(5000)
+
+    engine = SentenceAutocompleteEngine({
+        'file': 'data/sample_sentences.csv',
+        'autocompleter': 'simple',
+        'weight_type': 'average'
+    })
+
+    print(engine.autocompleter)
+
+    # Check that one sentence can be inserted twice
+    results = engine.autocomplete('a')
+    print(results)
+    # assert len(results) == 1
+    # assert results[0][0] == 'a star is born'
+    # assert results[0][1] == 15.0 + 6.5
 
     # print(sample_letter_autocomplete())
     # print(sample_sentence_autocomplete())
